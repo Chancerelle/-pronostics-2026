@@ -587,6 +587,43 @@
       color: #1f6149;
     }
 
+    .match-assist {
+      width: 100%;
+      min-height: 38px;
+      margin-top: 9px;
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 1px solid #aebbb6;
+      border-radius: 6px;
+      background: #f7faf8;
+      color: var(--forest-2);
+      font-size: 0.76rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+    }
+
+    .match-assist:hover {
+      border-color: #2f8b68;
+      background: var(--green-soft);
+      color: #1f6149;
+    }
+
+    .match-assist:disabled {
+      border-style: dashed;
+      background: #f0f3f1;
+      color: #8b9692;
+      cursor: not-allowed;
+    }
+
+    .match-assist-icon {
+      font-size: 0.95rem;
+      line-height: 1;
+    }
+
     .toast {
       position: fixed;
       z-index: 20;
@@ -723,6 +760,11 @@
         width: 52px;
         height: 46px;
       }
+
+      .match-assist {
+        min-height: 44px;
+        font-size: 0.8rem;
+      }
     }
 
     @media (max-width: 430px) {
@@ -814,15 +856,16 @@
       id: "mondial-2026-quarts-v1",
       name: "Pronostics 2026",
       storageKey: "pronostics-2026-mondial-v1",
+      rankingDate: "11 juin 2026",
       teams: {
-        france: { name: "France", code: "FR" },
-        maroc: { name: "Maroc", code: "MA" },
-        espagne: { name: "Espagne", code: "ES" },
-        belgique: { name: "Belgique", code: "BE" },
-        norvege: { name: "Norvège", code: "NO" },
-        angleterre: { name: "Angleterre", code: "EN" },
-        argentine: { name: "Argentine", code: "AR" },
-        suisse: { name: "Suisse", code: "CH" }
+        france: { name: "France", code: "FR", fifaRank: 3 },
+        maroc: { name: "Maroc", code: "MA", fifaRank: 7 },
+        espagne: { name: "Espagne", code: "ES", fifaRank: 2 },
+        belgique: { name: "Belgique", code: "BE", fifaRank: 9 },
+        norvege: { name: "Norvège", code: "NO", fifaRank: 31 },
+        angleterre: { name: "Angleterre", code: "EN", fifaRank: 4 },
+        argentine: { name: "Argentine", code: "AR", fifaRank: 1 },
+        suisse: { name: "Suisse", code: "CH", fifaRank: 19 }
       },
       rounds: [
         {
@@ -830,10 +873,30 @@
           name: "Quarts de finale",
           shortName: "Quarts",
           matches: [
-            { id: "qf1", label: "Match 97", teams: ["france", "maroc"] },
-            { id: "qf2", label: "Match 98", teams: ["espagne", "belgique"] },
-            { id: "qf3", label: "Match 99", teams: ["norvege", "angleterre"] },
-            { id: "qf4", label: "Match 100", teams: ["argentine", "suisse"] }
+            {
+              id: "qf1",
+              label: "Match 97",
+              teams: ["france", "maroc"],
+              officialResult: { teams: ["france", "maroc"], scores: [2, 0] }
+            },
+            {
+              id: "qf2",
+              label: "Match 98",
+              teams: ["espagne", "belgique"],
+              officialResult: { teams: ["espagne", "belgique"], scores: [2, 1] }
+            },
+            {
+              id: "qf3",
+              label: "Match 99",
+              teams: ["norvege", "angleterre"],
+              officialResult: { teams: ["norvege", "angleterre"], scores: [1, 2], note: "après prolongation" }
+            },
+            {
+              id: "qf4",
+              label: "Match 100",
+              teams: ["argentine", "suisse"],
+              officialResult: { teams: ["argentine", "suisse"], scores: [3, 1], note: "après prolongation" }
+            }
           ]
         },
         {
@@ -1083,6 +1146,42 @@
         </div>`;
     }
 
+    function getOfficialResult(match) {
+      return match.officialResult && sameParticipants(model.participants[match.id], match.officialResult.teams)
+        ? match.officialResult
+        : null;
+    }
+
+    function renderMatchAssist(match) {
+      const participants = model.participants[match.id];
+      const ready = Boolean(participants[0] && participants[1]);
+      const officialResult = ready ? getOfficialResult(match) : null;
+      const label = officialResult
+        ? "Afficher le résultat"
+        : ready
+          ? "Pronostic FIFA aléatoire"
+          : "Équipes à déterminer";
+      const icon = officialResult ? "✓" : "↻";
+      const title = officialResult
+        ? "Appliquer le résultat officiel de ce match"
+        : ready
+          ? `Générer un score pondéré par le classement FIFA du ${TOURNAMENT.rankingDate}`
+          : "Le pronostic sera disponible lorsque les deux équipes seront connues";
+
+      return `
+        <button
+          class="match-assist"
+          type="button"
+          data-match-assist
+          data-match-id="${match.id}"
+          title="${escapeHtml(title)}"
+          ${ready ? "" : "disabled"}
+        >
+          <span class="match-assist-icon" aria-hidden="true">${icon}</span>
+          <span>${escapeHtml(label)}</span>
+        </button>`;
+    }
+
     function renderMatch(match) {
       const status = matchStatus(match.id);
       return `
@@ -1094,6 +1193,7 @@
           ${renderTeam(match, 0)}
           ${renderTeam(match, 1)}
           ${renderTiePanel(match)}
+          ${renderMatchAssist(match)}
         </article>`;
     }
 
@@ -1191,6 +1291,65 @@
       announce(`${TOURNAMENT.teams[teamId].name} passe au tour suivant.`);
     }
 
+    function randomUnit() {
+      if (window.crypto && window.crypto.getRandomValues) {
+        const values = new Uint32Array(1);
+        window.crypto.getRandomValues(values);
+        return values[0] / 4294967296;
+      }
+      return Math.random();
+    }
+
+    function poissonScore(expectedGoals) {
+      const limit = Math.exp(-expectedGoals);
+      let product = 1;
+      let goals = 0;
+      do {
+        goals += 1;
+        product *= randomUnit();
+      } while (product > limit && goals < 8);
+      return goals - 1;
+    }
+
+    function rankingWinProbability(teamA, teamB) {
+      return 1 / (1 + Math.exp((teamA.fifaRank - teamB.fifaRank) / 12));
+    }
+
+    function generateFifaPrediction(participants) {
+      const teamA = TOURNAMENT.teams[participants[0]];
+      const teamB = TOURNAMENT.teams[participants[1]];
+      const rankGap = teamB.fifaRank - teamA.fifaRank;
+      const expectedA = Math.max(0.45, Math.min(2.6, 1.25 + rankGap / 28));
+      const expectedB = Math.max(0.45, Math.min(2.6, 1.25 - rankGap / 28));
+      const scores = [poissonScore(expectedA), poissonScore(expectedB)];
+      const tiebreakWinner = scores[0] === scores[1]
+        ? participants[randomUnit() < rankingWinProbability(teamA, teamB) ? 0 : 1]
+        : null;
+      return { scores, tiebreakWinner };
+    }
+
+    function applyMatchAssist(button) {
+      const matchId = button.dataset.matchId;
+      const match = matchById[matchId];
+      const participants = model.participants[matchId];
+      if (!match || !participants[0] || !participants[1]) return;
+
+      const officialResult = getOfficialResult(match);
+      const prediction = officialResult || generateFifaPrediction(participants);
+      state.matches[matchId].scores = prediction.scores.map(String);
+      state.matches[matchId].tiebreakWinner = prediction.tiebreakWinner || null;
+      reconcile(true);
+      saveState();
+      render();
+
+      const teamA = TOURNAMENT.teams[participants[0]].name;
+      const teamB = TOURNAMENT.teams[participants[1]].name;
+      const note = officialResult && officialResult.note ? `, ${officialResult.note}` : "";
+      const scoreText = `${teamA} ${prediction.scores[0]}–${prediction.scores[1]} ${teamB}${note}`;
+      announce(`${officialResult ? "Résultat officiel" : "Pronostic généré"} : ${scoreText}.`);
+      showToast(scoreText);
+    }
+
     function exportPredictions() {
       const payload = {
         ...state,
@@ -1266,6 +1425,9 @@
     });
 
     document.addEventListener("click", (event) => {
+      const matchAssist = event.target.closest("[data-match-assist]");
+      if (matchAssist) applyMatchAssist(matchAssist);
+
       const tiebreak = event.target.closest("[data-tiebreak]");
       if (tiebreak) chooseTiebreak(tiebreak);
 
