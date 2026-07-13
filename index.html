@@ -118,6 +118,50 @@
       gap: 24px;
     }
 
+    .brand-lockup {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-emblem {
+      position: relative;
+      width: 58px;
+      height: 58px;
+      flex: 0 0 58px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 0 0 2px rgba(226, 185, 79, 0.18);
+    }
+
+    .brand-emblem-shoe,
+    .brand-emblem-wrench {
+      position: absolute;
+      display: block;
+      font-size: 1.65rem;
+      line-height: 1;
+      filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
+    }
+
+    .brand-emblem-shoe {
+      left: 4px;
+      bottom: 5px;
+      transform: rotate(-9deg);
+    }
+
+    .brand-emblem-wrench {
+      top: 4px;
+      right: 3px;
+      transform: rotate(9deg);
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
     .brand-kicker {
       margin: 0 0 5px;
       color: #c9ded6;
@@ -779,6 +823,17 @@
       .header-subtitle {
         font-size: 0.9rem;
       }
+
+      .brand-emblem {
+        width: 50px;
+        height: 50px;
+        flex-basis: 50px;
+      }
+
+      .brand-emblem-shoe,
+      .brand-emblem-wrench {
+        font-size: 1.4rem;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -796,10 +851,16 @@
 <body>
   <header class="app-header">
     <div class="header-inner">
-      <div>
-        <p class="brand-kicker">Mondial 2026 · Tableau final</p>
-        <h1>Pronostics 2026</h1>
-        <p class="header-subtitle">Des quarts de finale jusqu’au champion</p>
+      <div class="brand-lockup">
+        <span class="brand-emblem" role="img" aria-label="Soulier de football et clé à molette" title="Soulier de football et clé à molette">
+          <span class="brand-emblem-shoe" aria-hidden="true">👟</span>
+          <span class="brand-emblem-wrench" aria-hidden="true">🔧</span>
+        </span>
+        <div class="brand-copy">
+          <p class="brand-kicker">Mondial 2026 · Tableau final</p>
+          <h1>Pronostics 2026</h1>
+          <p class="header-subtitle">Des quarts de finale jusqu’au champion</p>
+        </div>
       </div>
       <div class="progress-block" aria-label="Progression des pronostics">
         <div class="progress-label">
